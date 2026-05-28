@@ -1,0 +1,9 @@
+# Holistic Fitness Club
+
+> HFC is a holistic training community built on eight codex principles, with progress tracking, leaderboards, mentor chat and community events.
+
+## Pages
+
+- [Home](/): Overview of HFC — what the community offers and how to join.
+- [Sign in](/login): Returning members sign in to access their account.
+- [Join the Club](/signup): Create an HFC account and choose a training type (Online, Personal, Kids, Group).

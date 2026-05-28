@@ -1,0 +1,1 @@
+REVOKE EXECUTE ON FUNCTION public.send_birthday_reminders() FROM PUBLIC, anon, authenticated;
