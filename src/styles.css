@@ -216,3 +216,14 @@ select:focus {
   transform: translateY(-4px);
   box-shadow: 0 12px 40px rgba(139, 192, 0, 0.2);
 }
+@keyframes panelReveal {
+  from {
+    opacity: 0;
+    transform: translateY(18px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
