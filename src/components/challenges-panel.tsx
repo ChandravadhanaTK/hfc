@@ -89,7 +89,7 @@ export function ChallengesPanel() {
       alignItems: "center",
       gap: "0.6rem",
     }}>
-      <span style={{ color: "#00E676" }}>⚡</span> Active Challenges
+      <span style={{ color: "#8BC000" }}>⚡</span> Active Challenges
     </h2>
 
     <div className="flex justify-end">
