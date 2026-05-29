@@ -119,3 +119,100 @@
   }
   h1, h2, h3, h4 { font-family: var(--font-display); letter-spacing: -0.02em; }
 }
+/* ═══════════════════════════════════════
+   HFC NEON GREEN THEME UPGRADE
+═══════════════════════════════════════ */
+
+:root {
+  --hfc-green: #8BC000;
+  --hfc-black: #000000;
+  --hfc-card:  #111111;
+  --hfc-glow:  rgba(139, 192, 0, 0.45);
+}
+
+body {
+  background-color: #000000 !important;
+  color: #ffffff !important;
+}
+
+/* Neon green glow on all buttons */
+button {
+  transition: all 0.2s ease-out !important;
+}
+
+button:hover {
+  box-shadow: 0 0 20px rgba(139, 192, 0, 0.55),
+              0 0 40px rgba(139, 192, 0, 0.25) !important;
+  transform: scale(1.02) !important;
+}
+
+/* Green focus ring on inputs */
+input:focus,
+textarea:focus,
+select:focus {
+  outline: none !important;
+  border-color: #8BC000 !important;
+  box-shadow: 0 0 0 2px rgba(139, 192, 0, 0.3) !important;
+}
+
+/* Styled scrollbar */
+::-webkit-scrollbar { width: 5px; }
+::-webkit-scrollbar-track { background: #000; }
+::-webkit-scrollbar-thumb {
+  background: #8BC000;
+  border-radius: 4px;
+}
+
+/* Page fade-in animation */
+@keyframes pageFadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* Flame pulse animation */
+@keyframes flamePulse {
+  0%, 100% { transform: scale(1); }
+  50%       { transform: scale(1.15); }
+}
+
+/* Streak glow animation */
+@keyframes streakGlow {
+  0%, 100% { text-shadow: 0 0 10px rgba(139,192,0,0.5); }
+  50%       { text-shadow: 0 0 25px rgba(139,192,0,0.9),
+                           0 0 50px rgba(139,192,0,0.4); }
+}
+
+/* Hero word animation */
+@keyframes wordSlideIn {
+  from { opacity: 0; transform: translateY(18px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* Kids XP bar shimmer */
+@keyframes xpShimmer {
+  0%   { filter: brightness(1); }
+  50%  { filter: brightness(1.4); }
+  100% { filter: brightness(1); }
+}
+
+/* Kids title bounce */
+@keyframes titleBounce {
+  0%, 100% { transform: translateY(0) rotate(-1deg); }
+  50%       { transform: translateY(-8px) rotate(1deg); }
+}
+
+/* Star burst for kids checkboxes */
+@keyframes starBurst {
+  0%   { transform: scale(0) rotate(0deg);   opacity: 1; }
+  100% { transform: scale(2.5) rotate(180deg); opacity: 0; }
+}
+
+/* Card hover lift */
+.card-hover {
+  transition: transform 0.2s ease-out, box-shadow 0.2s ease-out;
+}
+
+.card-hover:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 40px rgba(139, 192, 0, 0.2);
+}
