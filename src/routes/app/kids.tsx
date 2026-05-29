@@ -1,290 +1,303 @@
-import { createFileRoute } from "@tanstack/react-router";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
-import { toTitleCase } from "@/lib/format";
-import { useAuth } from "@/lib/auth";
-import { useState, useMemo } from "react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Baby, Star, Clock, Dumbbell, Droplet, Bed, BedDouble } from "lucide-react";
-import { toast } from "sonner";
+import { useState, useEffect } from "react";
 
-export const Route = createFileRoute("/app/kids")({ component: KidsPage });
+const HABITS = [
+  { id: 1, emoji: "🥗", label: "Did you eat healthy today?", color: "#8BC000" },
+  { id: 2, emoji: "💧", label: "Did you drink enough water?", color: "#00BFFF" },
+  { id: 3, emoji: "🧘", label: "Did you meditate today?", color: "#B48EFF" },
+  { id: 4, emoji: "😴", label: "Did you sleep 8 hours?", color: "#FFD700" },
+  { id: 5, emoji: "🏋️", label: "Did you exercise today?", color: "#FF6B6B" },
+  { id: 6, emoji: "📖", label: "Did you read today?", color: "#FF9F43" },
+];
 
-type DailyForm = {
-  entry_date: string;
-  punctual: boolean;
-  exercise_rating: string;
-  water_litres: string;
-  wake_time: string;
-  sleep_time: string;
-  slept_8h: boolean;
-  made_bed: boolean;
-  notes: string;
-};
+const LEVELS = [
+  { min: 0, max: 6, name: "Rookie", icon: "🌱", color: "#888" },
+  { min: 7, max: 13, name: "Warrior", icon: "⚔️", color: "#8BC000" },
+  { min: 14, max: 20, name: "Champion", icon: "🏆", color: "#FFD700" },
+  { min: 21, max: 29, name: "Legend", icon: "👑", color: "#FF6B35" },
+  { min: 30, max: 999, name: "UNSTOPPABLE", icon: "🔥", color: "#FF3366" },
+];
 
-const todayStr = () => new Date().toISOString().slice(0, 10);
+const STARS = Array.from({ length: 30 }, (_, i) => ({
+  id: i,
+  left: `${Math.random() * 100}%`,
+  top: `${Math.random() * 100}%`,
+  size: `${6 + Math.random() * 10}px`,
+  delay: `${Math.random() * 4}s`,
+  duration: `${2 + Math.random() * 3}s`,
+}));
 
-function KidsPage() {
-  const { user, isAdmin, roles } = useAuth();
-  const isMentor = roles.includes("mentor");
-  const qc = useQueryClient();
-  const [form, setForm] = useState<DailyForm>({
-    entry_date: todayStr(),
-    punctual: false,
-    exercise_rating: "3",
-    water_litres: "",
-    wake_time: "",
-    sleep_time: "",
-    slept_8h: false,
-    made_bed: false,
-    notes: "",
-  });
+export default function KidsPage() {
+  const [checked, setChecked] = useState<number[]>([]);
+  const [burst, setBurst] = useState<number | null>(null);
+  const [streak] = useState(11);
+  const [celebrated, setCelebrated] = useState(false);
+  const [showCelebration, setShowCelebration] = useState(false);
 
-  const { data: entries } = useQuery({
-    queryKey: ["kids-daily", user?.id],
-    enabled: !!user,
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("kids_daily")
-        .select("*")
-        .eq("user_id", user!.id)
-        .order("entry_date", { ascending: false })
-        .limit(30);
-      if (error) throw error;
-      return data;
-    },
-  });
+  const level =
+    LEVELS.find((l) => streak >= l.min && streak <= l.max) ?? LEVELS[0];
 
-  const { data: myStars } = useQuery({
-    queryKey: ["my-stars", user?.id],
-    enabled: !!user,
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("kids_stars")
-        .select("*")
-        .eq("user_id", user!.id)
-        .order("created_at", { ascending: false });
-      if (error) throw error;
-      return data;
-    },
-  });
+  const xpPercent = Math.min(((streak % 7) / 7) * 100, 100);
+  const allDone = checked.length === HABITS.length;
 
-  const save = useMutation({
-    mutationFn: async () => {
-      const payload: any = {
-        user_id: user!.id,
-        entry_date: form.entry_date,
-        punctual: form.punctual,
-        exercise_rating: form.exercise_rating ? Number(form.exercise_rating) : null,
-        water_litres: form.water_litres ? Number(form.water_litres) : null,
-        wake_time: form.wake_time || null,
-        sleep_time: form.sleep_time || null,
-        slept_8h: form.slept_8h,
-        made_bed: form.made_bed,
-        notes: form.notes.trim() || null,
-      };
-      const { error } = await supabase.from("kids_daily").upsert(payload, { onConflict: "user_id,entry_date" });
-      if (error) throw error;
-    },
-    onSuccess: () => {
-      toast.success("Saved today's check-in");
-      qc.invalidateQueries({ queryKey: ["kids-daily"] });
-    },
-    onError: (e: any) => toast.error(e.message),
-  });
+  const toggle = (id: number) => {
+    setBurst(id);
+    setTimeout(() => setBurst(null), 600);
 
-  const starCounts = useMemo(() => {
-    const c = { gold: 0, silver: 0, blue: 0 };
-    for (const s of myStars ?? []) c[s.star_type as "gold" | "silver" | "blue"]++;
-    return c;
-  }, [myStars]);
+    setChecked((prev) =>
+      prev.includes(id)
+        ? prev.filter((x) => x !== id)
+        : [...prev, id]
+    );
+  };
+
+  useEffect(() => {
+    if (allDone && !celebrated) {
+      setCelebrated(true);
+      setShowCelebration(true);
+
+      setTimeout(() => setShowCelebration(false), 3000);
+    }
+
+    if (!allDone) setCelebrated(false);
+  }, [allDone]);
 
   return (
-    <div className="space-y-6">
-      <header>
-        <h1 className="text-4xl font-bold flex items-center gap-2"><Baby className="size-8" /> Kids</h1>
-        <p className="text-muted-foreground mt-2">Punctuality, exercise, discipline — earn your stars.</p>
-      </header>
+    <div
+      style={{
+        minHeight: "100vh",
+        background:
+          "linear-gradient(160deg, #050A1A 0%, #0A0F1E 50%, #050A14 100%)",
+        fontFamily: "'Nunito', 'Montserrat', sans-serif",
+        padding: "2rem",
+        position: "relative",
+        overflow: "hidden",
+      }}
+    >
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@700;800;900&display=swap');
 
-      <div className="grid grid-cols-3 gap-4">
-        <StarCard label="Gold" count={starCounts.gold} className="text-gold fill-gold" />
-        <StarCard label="Silver" count={starCounts.silver} className="text-muted-foreground fill-muted-foreground" />
-        <StarCard label="Blue" count={starCounts.blue} className="text-blue-500 fill-blue-500" />
-      </div>
+        @keyframes twinkle {
+          0%,100% { opacity:0.2; transform:scale(1); }
+          50% { opacity:1; transform:scale(1.5); }
+        }
 
-      <section className="rounded-xl border bg-card p-6 space-y-6">
-        <div className="flex items-center justify-between gap-2 flex-wrap">
-          <h2 className="text-lg font-semibold">Daily check-in</h2>
-          <div>
-            <Label htmlFor="entry_date" className="text-xs">Date</Label>
-            <Input id="entry_date" type="date" className="w-44" value={form.entry_date} onChange={(e) => setForm({ ...form, entry_date: e.target.value })} />
+        @keyframes floatBounce {
+          0%,100% { transform: translateY(0) rotate(-2deg); }
+          50% { transform: translateY(-12px) rotate(2deg); }
+        }
+
+        @keyframes starShoot {
+          0% { transform: translate(0,0) scale(1); opacity:1; }
+          100% { transform: translate(var(--dx), var(--dy)) scale(0); opacity:0; }
+        }
+
+        @keyframes xpFill {
+          from { width: 0%; }
+          to { width: ${xpPercent}%; }
+        }
+
+        @keyframes celebrationBounce {
+          0% { transform: scale(0) rotate(-10deg); opacity:0; }
+          60% { transform: scale(1.15) rotate(3deg); opacity:1; }
+          100% { transform: scale(1) rotate(0deg); opacity:1; }
+        }
+
+        @keyframes fadeInUp {
+          from { opacity:0; transform:translateY(20px); }
+          to { opacity:1; transform:translateY(0); }
+        }
+
+        .habit-card:hover {
+          transform: translateY(-4px) scale(1.02) !important;
+          box-shadow: 0 12px 40px rgba(139,192,0,0.25) !important;
+        }
+
+        .habit-card {
+          transition: all 0.25s cubic-bezier(0.34,1.56,0.64,1);
+        }
+      `}</style>
+
+      {showCelebration && (
+        <div
+          style={{
+            position: "fixed",
+            inset: 0,
+            background: "rgba(0,0,0,0.88)",
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            justifyContent: "center",
+            zIndex: 999,
+          }}
+        >
+          <div
+            style={{
+              fontSize: "6rem",
+            }}
+          >
+            ⭐
+          </div>
+
+          <div
+            style={{
+              fontSize: "3rem",
+              fontWeight: 900,
+              color: "#8BC000",
+              textShadow: "0 0 40px rgba(139,192,0,0.8)",
+            }}
+          >
+            CHAMPION DAY!
+          </div>
+
+          <div
+            style={{
+              color: "#fff",
+              fontSize: "1.2rem",
+              marginTop: "0.5rem",
+              opacity: 0.7,
+            }}
+          >
+            You completed all 6 habits! 🔥
           </div>
         </div>
+      )}
 
-        <Section icon={Clock} title="Punctuality">
-          <label className="flex items-center gap-2 text-sm cursor-pointer">
-            <Checkbox checked={form.punctual} onCheckedChange={(v) => setForm({ ...form, punctual: !!v })} />
-            On time today
-          </label>
-        </Section>
+      <div
+        style={{
+          textAlign: "center",
+          marginBottom: "2.5rem",
+          position: "relative",
+          zIndex: 1,
+        }}
+      >
+        <div
+          style={{
+            fontSize: "clamp(2.2rem, 6vw, 3.5rem)",
+            fontWeight: 900,
+            color: "#8BC000",
+            textShadow: "0 0 30px rgba(139,192,0,0.5)",
+          }}
+        >
+          ⭐ JUNIOR WARRIORS ⭐
+        </div>
 
-        <Section icon={Dumbbell} title="Exercise & Execution">
-          <Label className="text-xs">Rating (1–5)</Label>
-          <Select value={form.exercise_rating} onValueChange={(v) => setForm({ ...form, exercise_rating: v })}>
-            <SelectTrigger className="w-32"><SelectValue /></SelectTrigger>
-            <SelectContent>
-              {[1, 2, 3, 4, 5].map((n) => <SelectItem key={n} value={String(n)}>{n}</SelectItem>)}
-            </SelectContent>
-          </Select>
-        </Section>
+        <div
+          style={{
+            color: "#888",
+            fontSize: "1rem",
+            marginTop: "0.4rem",
+            fontWeight: 700,
+          }}
+        >
+          Complete your daily missions!
+        </div>
+      </div>
 
-        <Section icon={Droplet} title="Discipline">
-          <div className="space-y-4">
-            <div>
-              <Label htmlFor="water" className="text-xs flex items-center gap-1"><Droplet className="size-3" /> Water (target 2.5L)</Label>
-              <Input id="water" type="number" step="0.1" placeholder="2.5" value={form.water_litres} onChange={(e) => setForm({ ...form, water_litres: e.target.value })} />
-            </div>
-            <div className="grid md:grid-cols-2 gap-4">
-              <div>
-                <Label htmlFor="wake" className="text-xs">Wake-up time</Label>
-                <Input id="wake" type="time" value={form.wake_time} onChange={(e) => setForm({ ...form, wake_time: e.target.value })} />
-              </div>
-              <div>
-                <Label htmlFor="sleep" className="text-xs">Sleep time</Label>
-                <Input id="sleep" type="time" value={form.sleep_time} onChange={(e) => setForm({ ...form, sleep_time: e.target.value })} />
-              </div>
-            </div>
-            <label className="flex items-center gap-2 text-sm cursor-pointer">
-              <Checkbox checked={form.slept_8h} onCheckedChange={(v) => setForm({ ...form, slept_8h: !!v })} />
-              <BedDouble className="size-4" /> 8 hours of sleep
-            </label>
-            <label className="flex items-center gap-2 text-sm cursor-pointer">
-              <Checkbox checked={form.made_bed} onCheckedChange={(v) => setForm({ ...form, made_bed: !!v })} />
-              <Bed className="size-4" /> Made the bed
-            </label>
-            <p className="text-xs text-muted-foreground">Tip: keep wake-up and sleep times consistent every day.</p>
+      <div
+        style={{
+          maxWidth: "900px",
+          margin: "0 auto",
+          display: "grid",
+          gridTemplateColumns: "1fr 1fr",
+          gap: "1.5rem",
+        }}
+      >
+        <div
+          style={{
+            background: "linear-gradient(135deg, #0D1A0D, #1A2A0D)",
+            borderRadius: "24px",
+            padding: "1.75rem",
+            border: "2px solid rgba(139,192,0,0.3)",
+            textAlign: "center",
+          }}
+        >
+          <div
+            style={{
+              fontSize: "4.5rem",
+            }}
+          >
+            {level.icon}
           </div>
-        </Section>
 
-        <div>
-          <Label htmlFor="notes" className="text-xs">Notes</Label>
-          <Textarea id="notes" rows={2} value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} />
-        </div>
+          <div
+            style={{
+              color: level.color,
+              fontWeight: 900,
+              fontSize: "1.6rem",
+            }}
+          >
+            {level.name}
+          </div>
 
-        <Button onClick={() => save.mutate()} disabled={save.isPending}>
-          {save.isPending ? "Saving…" : "Save check-in"}
-        </Button>
-      </section>
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: "0.5rem",
+              marginBottom: "1rem",
+            }}
+          >
+            <span
+              style={{
+                fontSize: "2rem",
+              }}
+            >
+              🔥
+            </span>
 
-      {(isAdmin || isMentor) && <AwardStarCard />}
+            <span
+              style={{
+                fontSize: "2.5rem",
+                fontWeight: 900,
+                color: "#8BC000",
+                textShadow: "0 0 20px rgba(139,192,0,0.6)",
+              }}
+            >
+              {streak}
+            </span>
+          </div>
 
-      <section className="space-y-2">
-        <h2 className="text-lg font-semibold">Recent check-ins</h2>
-        {!entries?.length && <p className="text-sm text-muted-foreground">No entries yet.</p>}
-        <div className="rounded-xl border bg-card divide-y">
-          {entries?.map((e) => (
-            <div key={e.id} className="p-4 text-sm flex flex-wrap gap-x-4 gap-y-1">
-              <span className="font-semibold w-24">{e.entry_date}</span>
-              <span className={e.punctual ? "text-primary" : "text-muted-foreground"}>{e.punctual ? "✓" : "✗"} Punctual</span>
-              <span>Exec {e.exercise_rating ?? "—"}/5</span>
-              <span>{e.water_litres ?? "—"}L</span>
-              <span>Wake {e.wake_time ?? "—"}</span>
-              <span>Sleep {e.sleep_time ?? "—"}</span>
-              <span className={e.slept_8h ? "text-primary" : "text-muted-foreground"}>{e.slept_8h ? "✓" : "✗"} 8h</span>
-              <span className={e.made_bed ? "text-primary" : "text-muted-foreground"}>{e.made_bed ? "✓" : "✗"} Bed</span>
+          <div style={{ marginTop: "0.5rem" }}>
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                color: "#888",
+                fontSize: "0.75rem",
+                marginBottom: "0.4rem",
+              }}
+            >
+              <span>XP Progress</span>
+
+              <span style={{ color: "#8BC000" }}>
+                {Math.round(xpPercent)}%
+              </span>
             </div>
-          ))}
-        </div>
-      </section>
-    </div>
-  );
-}
 
-function Section({ icon: Icon, title, children }: { icon: any; title: string; children: React.ReactNode }) {
-  return (
-    <div className="space-y-2">
-      <h3 className="text-sm font-semibold flex items-center gap-2 text-muted-foreground"><Icon className="size-4" />{title}</h3>
-      <div>{children}</div>
-    </div>
-  );
-}
-
-function StarCard({ label, count, className }: { label: string; count: number; className: string }) {
-  return (
-    <div className="rounded-xl border bg-card p-4 flex items-center gap-3">
-      <Star className={`size-8 ${className}`} />
-      <div>
-        <p className="text-xs text-muted-foreground">{label} stars</p>
-        <p className="text-2xl font-bold">{count}</p>
-      </div>
-    </div>
-  );
-}
-
-function AwardStarCard() {
-  const qc = useQueryClient();
-  const [userId, setUserId] = useState("");
-  const [starType, setStarType] = useState("gold");
-  const [reason, setReason] = useState("");
-
-  const { data: kids } = useQuery({
-    queryKey: ["kids-list"],
-    queryFn: async () => {
-      const { data } = await supabase.from("public_profiles").select("id, full_name, username, training_type").eq("training_type", "KT");
-      return data ?? [];
-    },
-  });
-
-  const award = useMutation({
-    mutationFn: async () => {
-      if (!userId) throw new Error("Pick a kid");
-      const { error } = await supabase.from("kids_stars").insert({ user_id: userId, star_type: starType, reason: reason || null });
-      if (error) throw error;
-    },
-    onSuccess: () => {
-      toast.success("Star awarded");
-      setReason("");
-      qc.invalidateQueries({ queryKey: ["my-stars"] });
-      qc.invalidateQueries({ queryKey: ["lb-kids"] });
-    },
-    onError: (e: any) => toast.error(e.message),
-  });
-
-  return (
-    <section className="rounded-xl border bg-card p-6 space-y-4">
-      <h2 className="text-lg font-semibold flex items-center gap-2"><Star className="size-5 text-gold fill-gold" /> Award a star (staff)</h2>
-      <div className="grid md:grid-cols-3 gap-3">
-        <div>
-          <Label className="text-xs">Kid</Label>
-          <Select value={userId} onValueChange={setUserId}>
-            <SelectTrigger><SelectValue placeholder="Pick a kid" /></SelectTrigger>
-            <SelectContent>
-              {kids?.filter(k => k.id != null).map((k) => <SelectItem key={k.id!} value={k.id!}>{k.full_name || toTitleCase(k.username)}</SelectItem>)}
-            </SelectContent>
-          </Select>
-        </div>
-        <div>
-          <Label className="text-xs">Star</Label>
-          <Select value={starType} onValueChange={setStarType}>
-            <SelectTrigger><SelectValue /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="gold">Gold</SelectItem>
-              <SelectItem value="silver">Silver</SelectItem>
-              <SelectItem value="blue">Blue</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-        <div>
-          <Label className="text-xs">Reason</Label>
-          <Input value={reason} onChange={(e) => setReason(e.target.value)} placeholder="Why?" />
+            <div
+              style={{
+                height: "14px",
+                background: "#1A1A1A",
+                borderRadius: "999px",
+                overflow: "hidden",
+                border: "1px solid rgba(139,192,0,0.2)",
+              }}
+            >
+              <div
+                style={{
+                  height: "100%",
+                  width: `${xpPercent}%`,
+                  background:
+                    "linear-gradient(90deg, #8BC000, #A4D900, #8BC000)",
+                  borderRadius: "999px",
+                  boxShadow: "0 0 10px rgba(139,192,0,0.7)",
+                }}
+              />
+            </div>
+          </div>
         </div>
       </div>
-      <Button onClick={() => award.mutate()} disabled={award.isPending}>Award</Button>
-    </section>
+    </div>
   );
 }
