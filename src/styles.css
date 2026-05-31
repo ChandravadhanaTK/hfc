@@ -124,10 +124,17 @@
 ═══════════════════════════════════════ */
 
 :root {
+<<<<<<< HEAD
   --hfc-green: #00E676;
   --hfc-black: #000000;
   --hfc-card:  #111111;
   --hfc-glow:  rgba(0, 230, 118, 0.45);
+=======
+  --hfc-green: #8BC000;
+  --hfc-black: #000000;
+  --hfc-card:  #111111;
+  --hfc-glow:  rgba(139, 192, 0, 0.45);
+>>>>>>> ui-updates-sherin
 }
 
 body {
@@ -141,8 +148,13 @@ button {
 }
 
 button:hover {
+<<<<<<< HEAD
   box-shadow: 0 0 20px rgba(0, 230, 118, 0.55),
               0 0 40px rgba(0, 230, 118, 0.25) !important;
+=======
+  box-shadow: 0 0 20px rgba(139, 192, 0, 0.55),
+              0 0 40px rgba(139, 192, 0, 0.25) !important;
+>>>>>>> ui-updates-sherin
   transform: scale(1.02) !important;
 }
 
@@ -151,15 +163,24 @@ input:focus,
 textarea:focus,
 select:focus {
   outline: none !important;
+<<<<<<< HEAD
   border-color: #00E676 !important;
   box-shadow: 0 0 0 2px rgba(0, 230, 118, 0.3) !important;
+=======
+  border-color: #8BC000 !important;
+  box-shadow: 0 0 0 2px rgba(139, 192, 0, 0.3) !important;
+>>>>>>> ui-updates-sherin
 }
 
 /* Styled scrollbar */
 ::-webkit-scrollbar { width: 5px; }
 ::-webkit-scrollbar-track { background: #000; }
 ::-webkit-scrollbar-thumb {
+<<<<<<< HEAD
   background: #00E676;
+=======
+  background: #8BC000;
+>>>>>>> ui-updates-sherin
   border-radius: 4px;
 }
 
@@ -177,9 +198,15 @@ select:focus {
 
 /* Streak glow animation */
 @keyframes streakGlow {
+<<<<<<< HEAD
   0%, 100% { text-shadow: 0 0 10px rgba(0,230,118,0.5); }
   50%       { text-shadow: 0 0 25px rgba(0,230,118,0.9),
                            0 0 50px rgba(0,230,118,0.4); }
+=======
+  0%, 100% { text-shadow: 0 0 10px rgba(139,192,0,0.5); }
+  50%       { text-shadow: 0 0 25px rgba(139,192,0,0.9),
+                           0 0 50px rgba(139,192,0,0.4); }
+>>>>>>> ui-updates-sherin
 }
 
 /* Hero word animation */
@@ -214,5 +241,31 @@ select:focus {
 
 .card-hover:hover {
   transform: translateY(-4px);
+<<<<<<< HEAD
   box-shadow: 0 12px 40px rgba(0, 230, 118, 0.2);
+=======
+  box-shadow: 0 12px 40px rgba(139, 192, 0, 0.2);
+}
+@keyframes panelReveal {
+  from {
+    opacity: 0;
+    transform: translateY(18px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+@keyframes countUp {
+  from {
+    opacity: 0;
+    transform: scale(0.5);
+  }
+
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+>>>>>>> ui-updates-sherin
 }

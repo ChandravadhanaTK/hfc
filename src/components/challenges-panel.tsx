@@ -74,9 +74,25 @@ export function ChallengesPanel() {
     } catch { /* non-fatal */ }
   };
 
-  return (
-    <div className="space-y-4">
-      <div className="flex justify-end">
+ return (
+  <div 
+    className="space-y-4"
+    style={{ animation: "panelReveal 0.5s ease-out forwards" }}
+  >
+
+    <h2 style={{
+      fontSize: "1.8rem",
+      fontWeight: 900,
+      color: "#ffffff",
+      letterSpacing: "-0.5px",
+      display: "flex",
+      alignItems: "center",
+      gap: "0.6rem",
+    }}>
+      <span style={{ color: "#8BC000" }}>⚡</span> Active Challenges
+    </h2>
+
+    <div className="flex justify-end">
         <Dialog open={open} onOpenChange={setOpen}>
           <DialogTrigger asChild><Button><Plus className="size-4" /> New challenge</Button></DialogTrigger>
           <DialogContent>
